@@ -36,26 +36,41 @@ Adafruit_PCD8544 display = Adafruit_PCD8544(PIN_SCLK, PIN_SDIN, PIN_DC, PIN_SCE,
 #define YPOS 1
 #define DELTAY 2
  
-#define LOGO16_GLCD_HEIGHT 16
-#define LOGO16_GLCD_WIDTH  16
+#define LOGO_MOTO_HEIGHT 30
+#define LOGO_MOTO_WIDTH  32
  
-static const unsigned char PROGMEM logo16_glcd_bmp[] =
-{ B00000000, B11000000,
-B00000001, B11000000,
-B00000001, B11000000,
-B00000011, B11100000,
-B11110011, B11100000,
-B11111110, B11111000,
-B01111110, B11111111,
-B00110011, B10011111,
-B00011111, B11111100,
-B00001101, B01110000,
-B00011011, B10100000,
-B00111111, B11100000,
-B00111111, B11110000,
-B01111100, B11110000,
-B01110000, B01110000,
-B00000000, B00110000 };
+static const unsigned char PROGMEM logo_moto_bmp[] = { 
+  B00000000,B00000000,B00000000,B00000000,
+  B00000000,B00000001,B11111000,B00000000,
+  B00000000,B00000001,B11110100,B00000000,
+  B00000011,B11111111,B11110100,B00000000,
+  B00000011,B11111111,B11110100,B00000000,
+  B00000000,B00011111,B11110100,B00000000,
+  B00000000,B00000001,B11111100,B00000000,
+  B00000000,B00000000,B11111000,B00000000,
+  B00000000,B00000000,B00000000,B00000000,
+  B00000000,B00000000,B00000000,B00000000,
+  B00000000,B00000000,B00000000,B00000000,
+  B00000000,B00001110,B00000000,B00000000,
+  B00000000,B00001111,B00000000,B00000000,
+  B00000000,B00000011,B00000000,B00000000,
+  B00000000,B00000110,B00000000,B00000000,
+  B00000000,B00001101,B10000000,B00000000,
+  B00000000,B00001111,B11000000,B00000000,
+  B00000000,B00001111,B11100000,B00000000,
+  B00000000,B11111101,B11100000,B00000000,
+  B00000000,B11111000,B11110000,B00000000,
+  B00000000,B00000000,B11110000,B00000000,
+  B00000000,B00000111,B11100000,B00000000,
+  B00000011,B11000111,B00001111,B10000000,
+  B00000110,B01100111,B00011000,B11000000,
+  B00000100,B00110011,B00010000,B01000000,
+  B00001100,B00010011,B10010000,B01000000,
+  B00000100,B00010001,B10010000,B01000000,
+  B00000110,B00110001,B10011000,B11000000,
+  B00000011,B11100000,B00001111,B10000000,
+  B00000000,B00000000,B00000000,B00000000,
+};
 
 const int PIN_X_JOY = A2;
 const int PIN_Y_JOY = A3;
@@ -126,283 +141,139 @@ int buttonJoy = 0;
       
 //}
 
-//void setup() {
-//   Serial.begin(9600);
-// 
-//   display.begin();
-//   // init done
-// 
-//   // you can change the contrast around to adapt the display
-//   // for the best viewing!
-//   display.setContrast(50);
-// 
-//   display.display(); // show splashscreen
-//   delay(2000);
-//   display.clearDisplay();   // clears the screen and buffer
-// 
-//                       // draw a single pixel
-//   display.drawPixel(10, 10, BLACK);
-//   display.display();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   // draw many lines
-//   testdrawline();
-//   display.display();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   // draw rectangles
-//   testdrawrect();
-//   display.display();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   // draw multiple rectangles
-//   testfillrect();
-//   display.display();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   // draw mulitple circles
-//   testdrawcircle();
-//   display.display();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   // draw a circle, 10 pixel radius
-//   display.fillCircle(display.width() / 2, display.height() / 2, 10, BLACK);
-//   display.display();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   testdrawroundrect();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   testfillroundrect();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   testdrawtriangle();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   testfilltriangle();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   // draw the first ~12 characters in the font
-//   testdrawchar();
-//   display.display();
-//   delay(2000);
-//   display.clearDisplay();
-// 
-//   // text display tests
-//   display.setTextSize(1);
-//   display.setTextColor(BLACK);
-//   display.setCursor(0, 0);
-//   display.println("Hello, world!");
-//   display.setTextColor(WHITE, BLACK); // 'inverted' text
-//   display.println(3.141592);
-//   display.setTextSize(2);
-//   display.setTextColor(BLACK);
-//   display.print("0x"); display.println(0xDEADBEEF, HEX);
-//   display.display();
-//   delay(2000);
-// 
-//   // rotation example
-//   display.clearDisplay();
-//   display.setRotation(1);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
-//   display.setTextSize(1);
-//   display.setTextColor(BLACK);
-//   display.setCursor(0, 0);
-//   display.println("Rotation");
-//   display.setTextSize(2);
-//   display.println("Example!");
-//   display.display();
-//   delay(2000);
-// 
-//   // revert back to no rotation
-//   display.setRotation(0);
-// 
-//   // miniature bitmap display
-//   display.clearDisplay();
-//   display.drawBitmap(30, 16, logo16_glcd_bmp, 16, 16, 1);
-//   display.display();
-// 
-//   // invert the display
-//   display.invertDisplay(true);
-//   delay(1000);
-//   display.invertDisplay(false);
-//   delay(1000);
-// 
-//   // draw a bitmap icon and 'animate' movement
-//   testdrawbitmap(logo16_glcd_bmp, LOGO16_GLCD_WIDTH, LOGO16_GLCD_HEIGHT);
-//}
-// 
-//void loop() {
-// 
-//}
-//
-//void testdrawbitmap(const uint8_t *bitmap, uint8_t w, uint8_t h) {
-//   uint8_t icons[NUMFLAKES][3];
-//   randomSeed(666);     // whatever seed
-// 
-//                   // initialize
-//   for (uint8_t f = 0; f< NUMFLAKES; f++) {
-//      icons[f][XPOS] = random(display.width());
-//      icons[f][YPOS] = 0;
-//      icons[f][DELTAY] = random(5) + 1;
-// 
-//      Serial.print("x: ");
-//      Serial.print(icons[f][XPOS], DEC);
-//      Serial.print(" y: ");
-//      Serial.print(icons[f][YPOS], DEC);
-//      Serial.print(" dy: ");
-//      Serial.println(icons[f][DELTAY], DEC);
-//   }
-// 
-//   while (1) {
-//      // draw each icon
-//      for (uint8_t f = 0; f< NUMFLAKES; f++) {
-//         display.drawBitmap(icons[f][XPOS], icons[f][YPOS], logo16_glcd_bmp, w, h, BLACK);
-//      }
-//      display.display();
-//      delay(200);
-// 
-//      // then erase it + move it
-//      for (uint8_t f = 0; f< NUMFLAKES; f++) {
-//         display.drawBitmap(icons[f][XPOS], icons[f][YPOS], logo16_glcd_bmp, w, h, WHITE);
-//         // move it
-//         icons[f][YPOS] += icons[f][DELTAY];
-//         // if its gone, reinit
-//         if (icons[f][YPOS] > display.height()) {
-//            icons[f][XPOS] = random(display.width());
-//            icons[f][YPOS] = 0;
-//            icons[f][DELTAY] = random(5) + 1;
-//         }
-//      }
-//   }
-//}
-//  
-//void testdrawchar(void) {
-//   display.setTextSize(1);
-//   display.setTextColor(BLACK);
-//   display.setCursor(0, 0);
-// 
-//   for (uint8_t i = 0; i < 168; i++) {
-//      if (i == '\n') continue;
-//      display.write(i);
-//      //if ((i > 0) && (i % 14 == 0))
-//      //display.println();
-//   }
-//   display.display();
-//}
-// 
-//void testdrawcircle(void) {
-//   for (int16_t i = 0; i<display.height(); i += 2) {
-//      display.drawCircle(display.width() / 2, display.height() / 2, i, BLACK);
-//      display.display();
-//   }
-//}
-// 
-//void testfillrect(void) {
-//   uint8_t color = 1;
-//   for (int16_t i = 0; i<display.height() / 2; i += 3) {
-//      // alternate colors
-//      display.fillRect(i, i, display.width() - i * 2, display.height() - i * 2, color % 2);
-//      display.display();
-//      color++;
-//   }
-//}
-// 
-//void testdrawtriangle(void) {
-//   for (int16_t i = 0; i<min(display.width(), display.height()) / 2; i += 5) {
-//      display.drawTriangle(display.width() / 2, display.height() / 2 - i,
-//         display.width() / 2 - i, display.height() / 2 + i,
-//         display.width() / 2 + i, display.height() / 2 + i, BLACK);
-//      display.display();
-//   }
-//}
-// 
-//void testfilltriangle(void) {
-//   uint8_t color = BLACK;
-//   for (int16_t i = min(display.width(), display.height()) / 2; i>0; i -= 5) {
-//      display.fillTriangle(display.width() / 2, display.height() / 2 - i,
-//         display.width() / 2 - i, display.height() / 2 + i,
-//         display.width() / 2 + i, display.height() / 2 + i, color);
-//      if (color == WHITE) color = BLACK;
-//      else color = WHITE;
-//      display.display();
-//   }
-//}
-// 
-//void testdrawroundrect(void) {
-//   for (int16_t i = 0; i<display.height() / 2 - 2; i += 2) {
-//      display.drawRoundRect(i, i, display.width() - 2 * i, display.height() - 2 * i, display.height() / 4, BLACK);
-//      display.display();
-//   }
-//}
-// 
-//void testfillroundrect(void) {
-//   uint8_t color = BLACK;
-//   for (int16_t i = 0; i<display.height() / 2 - 2; i += 2) {
-//      display.fillRoundRect(i, i, display.width() - 2 * i, display.height() - 2 * i, display.height() / 4, color);
-//      if (color == WHITE) color = BLACK;
-//      else color = WHITE;
-//      display.display();
-//   }
-//}
-// 
-//void testdrawrect(void) {
-//   for (int16_t i = 0; i<display.height() / 2; i += 2) {
-//      display.drawRect(i, i, display.width() - 2 * i, display.height() - 2 * i, BLACK);
-//      display.display();
-//   }
-//}
-// 
-//void testdrawline() {
-//   for (int16_t i = 0; i<display.width(); i += 4) {
-//      display.drawLine(0, 0, i, display.height() - 1, BLACK);
-//      display.display();
-//   }
-//   for (int16_t i = 0; i<display.height(); i += 4) {
-//      display.drawLine(0, 0, display.width() - 1, i, BLACK);
-//      display.display();
-//   }
-//   delay(250);
-// 
-//   display.clearDisplay();
-//   for (int16_t i = 0; i<display.width(); i += 4) {
-//      display.drawLine(0, display.height() - 1, i, 0, BLACK);
-//      display.display();
-//   }
-//   for (int8_t i = display.height() - 1; i >= 0; i -= 4) {
-//      display.drawLine(0, display.height() - 1, display.width() - 1, i, BLACK);
-//      display.display();
-//   }
-//   delay(250);
-// 
-//   display.clearDisplay();
-//   for (int16_t i = display.width() - 1; i >= 0; i -= 4) {
-//      display.drawLine(display.width() - 1, display.height() - 1, i, 0, BLACK);
-//      display.display();
-//   }
-//   for (int16_t i = display.height() - 1; i >= 0; i -= 4) {
-//      display.drawLine(display.width() - 1, display.height() - 1, 0, i, BLACK);
-//      display.display();
-//   }
-//   delay(250);
-// 
-//   display.clearDisplay();
-//   for (int16_t i = 0; i<display.height(); i += 4) {
-//      display.drawLine(display.width() - 1, 0, 0, i, BLACK);
-//      display.display();
-//   }
-//   for (int16_t i = 0; i<display.width(); i += 4) {
-//      display.drawLine(display.width() - 1, 0, i, display.height() - 1, BLACK);
-//      display.display();
-//   }
-//   delay(250);
-//}
+void setup() {
+  Serial.begin(9600);
+  
+  display.begin();
+  // init done
+  
+  display.clearDisplay();   // clears the screen and buffer
+  
+  // signal status display
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+  display.setCursor(0, 0);
+  display.print("RF Signal");
+  display.setCursor(57, 1);
+  display.write(26); // -> simbol
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.drawPixel(65,0, BLACK);
+  display.drawPixel(65,1, BLACK);
+  display.drawPixel(65,2, BLACK);
+  display.drawPixel(65,3, BLACK);
+  display.drawPixel(65,4, BLACK);
+  display.drawPixel(65,5, BLACK);
+  display.drawPixel(65,6, BLACK);
+  display.drawPixel(65,7, BLACK);
+  display.setCursor(66, 0);
+  display.print("off");
+  display.setTextColor(BLACK);
+  
+  // temp and bat status display
+  // temp
+  display.setCursor(0, 9);
+  display.print("Tmp");
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.drawPixel(0,20, BLACK);
+  display.drawPixel(0,21, BLACK);
+  display.drawPixel(0,22, BLACK);
+  display.drawPixel(0,23, BLACK);
+  display.drawPixel(0,24, BLACK);
+  display.drawPixel(0,25, BLACK);
+  display.drawPixel(0,26, BLACK);
+  display.drawPixel(0,27, BLACK);
+  
+  display.drawPixel(0,19, BLACK);
+  display.drawPixel(1,19, BLACK);
+  display.drawPixel(2,19, BLACK);
+  display.drawPixel(3,19, BLACK);
+  display.drawPixel(4,19, BLACK);
+  display.drawPixel(5,19, BLACK);
+  display.drawPixel(6,19, BLACK);
+  display.drawPixel(7,19, BLACK);
+  display.drawPixel(8,19, BLACK);
+  display.drawPixel(9,19, BLACK);
+  display.drawPixel(10,19, BLACK);
+  display.drawPixel(11,19, BLACK);
+  display.drawPixel(12,19, BLACK);
+  
+  display.setCursor(1, 20);
+  display.print(69);
+  display.setTextColor(BLACK);
+  display.setCursor(16, 18);
+  display.write(9); // º simbol
+  display.setCursor(22, 20);
+  display.print("C");
+
+  // bat
+  display.setTextColor(BLACK);
+  display.setCursor(0, 30);
+  display.print("Bat");
+  
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.drawPixel(0,40, BLACK);
+  display.drawPixel(0,41, BLACK);
+  display.drawPixel(0,42, BLACK);
+  display.drawPixel(0,43, BLACK);
+  display.drawPixel(0,44, BLACK);
+  display.drawPixel(0,45, BLACK);
+  display.drawPixel(0,46, BLACK);
+  display.drawPixel(0,47, BLACK);
+  
+  display.drawPixel(0,39, BLACK);
+  display.drawPixel(1,39, BLACK);
+  display.drawPixel(2,39, BLACK);
+  display.drawPixel(3,39, BLACK);
+  display.drawPixel(4,39, BLACK);
+  display.drawPixel(5,39, BLACK);
+  display.drawPixel(6,39, BLACK);
+  display.drawPixel(7,39, BLACK);
+  display.drawPixel(8,39, BLACK);
+  display.drawPixel(9,39, BLACK);
+  display.drawPixel(10,39, BLACK);
+  display.drawPixel(11,39, BLACK);
+  display.drawPixel(12,39, BLACK);
+  
+  display.setCursor(1, 40);
+  display.print(69);
+  display.setTextColor(BLACK);
+  display.setCursor(18, 40);
+  display.print("%");
+
+  // mode status display
+  display.setCursor(56, 9);
+  display.print("sys");
+  display.setCursor(56,19);
+  display.print("mode");
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.drawPixel(56,29, BLACK);
+  display.drawPixel(56,30, BLACK);
+  display.drawPixel(56,31, BLACK);
+  display.drawPixel(56,32, BLACK);
+  display.drawPixel(56,33, BLACK);
+  display.drawPixel(56,34, BLACK);
+  display.drawPixel(56,35, BLACK);
+  display.drawPixel(56,36, BLACK);
+  display.setCursor(57, 29);
+  display.print("off");
+  display.setTextColor(BLACK);
+
+  // alarm display
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.setCursor(28, 40);
+  display.write(32);
+  display.write(42);
+  display.print("thief");
+  display.write(42);
+  display.write(32);
+  
+  // bitmap display
+  display.drawBitmap(26, 10, logo_moto_bmp, LOGO_MOTO_WIDTH, LOGO_MOTO_HEIGHT, BLACK);
+  display.display();
+   
+}
+ 
+void loop() {
+ 
+}
+  
