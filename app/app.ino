@@ -11,14 +11,13 @@
 #include <DHT11.h>
 
 
-const int pinDTH11 = 2;
-DHT11 dht11(pinDTH11);
+const int PIN_DTH11 = 2;
+DHT11 dht11(PIN_DTH11);
  
 const int mpuAddress = 0x68;  // Puede ser 0x68 o 0x69
 MPU6050 mpu(mpuAddress);
  
 int ax, ay, az;
-int gx, gy, gz;
 
 const int PIN_RESET = 3;  // LCD1 Reset
 const int PIN_SCE = 4;    // LCD2 Chip Select
@@ -26,15 +25,12 @@ const int PIN_DC = 5;     // LCD3 Dat/Command
 const int PIN_SDIN = 6;   // LCD4 Data in
 const int PIN_SCLK = 7;   // LCD5 Clk
                           // LCD6 Vcc
-                          // LCD7 Vled
+const int PIN_VLED = 8;   // LCD7 Vled
                           // LCD8 Gnd
 
+const int PIN_BUT_DIS = 9;
+
 Adafruit_PCD8544 display = Adafruit_PCD8544(PIN_SCLK, PIN_SDIN, PIN_DC, PIN_SCE, PIN_RESET);
- 
-#define NUMFLAKES 10
-#define XPOS 0
-#define YPOS 1
-#define DELTAY 2
  
 #define LOGO_MOTO_HEIGHT 30
 #define LOGO_MOTO_WIDTH  32
@@ -72,30 +68,16 @@ static const unsigned char PROGMEM logo_moto_bmp[] = {
   B00000000,B00000000,B00000000,B00000000,
 };
 
-const int PIN_X_JOY = A2;
-const int PIN_Y_JOY = A3;
-const int PIN_B_JOY = 8;
-
-int xPosJoy = 0;
-int yPosJoy = 0;
-int buttonJoy = 0;
-
 //void setup()
 //{
 //   Serial.begin(9600);
 //   Wire.begin();
 //   mpu.initialize();
 //   Serial.println(mpu.testConnection() ? F("IMU iniciado correctamente") : F("Error al iniciar IMU"));
-//
-//   pinMode(PIN_X_JOY, INPUT);
-//   pinMode(PIN_Y_JOY, INPUT);
-//   
-//   //activar resistencia pull-up en el pin pulsador 
-//   pinMode(PIN_B_JOY, INPUT_PULLUP); 
 //}
-// 
+//
 //void loop(){
-  
+//  
 //  // Leer las aceleraciones 
 //  mpu.getAcceleration(&ax, &ay, &az);
 // 
@@ -109,7 +91,7 @@ int buttonJoy = 0;
 //  Serial.print(F("\tInclinacion en Y:"));
 //  Serial.println(accel_ang_y);
 //  delay(10);
-
+//
 //  int err;
 //  float temp, hum;
 //  if((err = dht11.read(hum, temp)) == 0){ // Si devuelve 0 ha leido bien
@@ -124,29 +106,61 @@ int buttonJoy = 0;
 //      Serial.print(err);
 //      Serial.println();
 //  }
-//  delay(1000);            //Recordad que solo lee una vez por segundo
-
-//  xPosJoy = analogRead(PIN_X_JOY);
-//  yPosJoy = analogRead(PIN_Y_JOY);
-//  buttonJoy = digitalRead(PIN_B_JOY);
-//    
-//  Serial.print("X: ");
-//  Serial.print(xPosJoy);
-//  Serial.print(" | Y: ");
-//  Serial.print(yPosJoy);
-//  Serial.print(" | Button: ");
-//  Serial.println(buttonJoy);
-//  
-//  delay(100); // añadir un poco de retraso entre lecturas
-      
+//  delay(1000);            //Recordad que solo lee una vez por segundo      
 //}
+
+int cont = 0;
+bool rf = true;
+int tmp = 0;
+int bat_lvl = 0;
+char mod[4] = "on";
+bool thief = false;
+
+bool activLCD = true;
 
 void setup() {
   Serial.begin(9600);
+
+  pinMode(PIN_BUT_DIS, INPUT_PULLUP); 
+  
+  pinMode(PIN_VLED, OUTPUT);
+  digitalWrite(PIN_VLED, LOW);
   
   display.begin();
   // init done
-  
+}
+ 
+void loop() {
+    if(!digitalRead(PIN_BUT_DIS)){                
+    while(!digitalRead(PIN_BUT_DIS));    
+    if(activLCD == true){
+      display.clearDisplay();
+      display.display();
+      digitalWrite(PIN_VLED, HIGH);
+       activLCD = false;
+    }else{
+      digitalWrite(PIN_VLED, LOW);
+       activLCD = true;
+    }
+  }
+
+  if(activLCD == true){
+    printLCD(rf, tmp, bat_lvl, mod, thief);
+    cont++;
+    
+    delay(200);
+    if(cont == 2){
+      tmp++;
+      bat_lvl++;
+      cont = 0;
+    }
+    if(tmp == 50){
+      thief = true;
+    } 
+  }
+}
+
+void printLCD(bool _rf, int _tmp, int _bat, char _mode[4], bool _thief){
   display.clearDisplay();   // clears the screen and buffer
   
   // signal status display
@@ -166,7 +180,11 @@ void setup() {
   display.drawPixel(65,6, BLACK);
   display.drawPixel(65,7, BLACK);
   display.setCursor(66, 0);
-  display.print("off");
+  if(_rf){
+    display.print("on");
+  }else{
+    display.print("off");
+  }
   display.setTextColor(BLACK);
   
   // temp and bat status display
@@ -182,34 +200,38 @@ void setup() {
   display.drawPixel(0,25, BLACK);
   display.drawPixel(0,26, BLACK);
   display.drawPixel(0,27, BLACK);
-  
-  display.drawPixel(0,19, BLACK);
-  display.drawPixel(1,19, BLACK);
-  display.drawPixel(2,19, BLACK);
-  display.drawPixel(3,19, BLACK);
-  display.drawPixel(4,19, BLACK);
-  display.drawPixel(5,19, BLACK);
-  display.drawPixel(6,19, BLACK);
-  display.drawPixel(7,19, BLACK);
-  display.drawPixel(8,19, BLACK);
-  display.drawPixel(9,19, BLACK);
-  display.drawPixel(10,19, BLACK);
-  display.drawPixel(11,19, BLACK);
-  display.drawPixel(12,19, BLACK);
-  
-  display.setCursor(1, 20);
-  display.print(69);
-  display.setTextColor(BLACK);
-  display.setCursor(16, 18);
-  display.write(9); // º simbol
-  display.setCursor(22, 20);
-  display.print("C");
+  if(_tmp != 0){
+    display.drawPixel(0,19, BLACK);
+    display.drawPixel(1,19, BLACK);
+    display.drawPixel(2,19, BLACK);
+    display.drawPixel(3,19, BLACK);
+    display.drawPixel(4,19, BLACK);
+    display.drawPixel(5,19, BLACK);
+    display.drawPixel(6,19, BLACK);
+    if(_tmp/10 > 0){
+      display.drawPixel(7,19, BLACK);
+      display.drawPixel(8,19, BLACK);
+      display.drawPixel(9,19, BLACK);
+      display.drawPixel(10,19, BLACK);
+      display.drawPixel(11,19, BLACK);
+      display.drawPixel(12,19, BLACK);
+    }
+    display.setCursor(1, 20);
+    display.print(_tmp);
+    display.setTextColor(BLACK);
+    display.setCursor(16, 18);
+    display.write(9); // º simbol
+    display.setCursor(22, 20);
+    display.print("C"); 
+  }else{
+    display.setCursor(1, 20);
+    display.print("nc");
+  }
 
   // bat
   display.setTextColor(BLACK);
   display.setCursor(0, 30);
   display.print("Bat");
-  
   display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.drawPixel(0,40, BLACK);
   display.drawPixel(0,41, BLACK);
@@ -219,26 +241,39 @@ void setup() {
   display.drawPixel(0,45, BLACK);
   display.drawPixel(0,46, BLACK);
   display.drawPixel(0,47, BLACK);
-  
-  display.drawPixel(0,39, BLACK);
-  display.drawPixel(1,39, BLACK);
-  display.drawPixel(2,39, BLACK);
-  display.drawPixel(3,39, BLACK);
-  display.drawPixel(4,39, BLACK);
-  display.drawPixel(5,39, BLACK);
-  display.drawPixel(6,39, BLACK);
-  display.drawPixel(7,39, BLACK);
-  display.drawPixel(8,39, BLACK);
-  display.drawPixel(9,39, BLACK);
-  display.drawPixel(10,39, BLACK);
-  display.drawPixel(11,39, BLACK);
-  display.drawPixel(12,39, BLACK);
-  
-  display.setCursor(1, 40);
-  display.print(69);
-  display.setTextColor(BLACK);
-  display.setCursor(18, 40);
-  display.print("%");
+  if(_bat != 0){
+    display.drawPixel(0,39, BLACK);
+    display.drawPixel(1,39, BLACK);
+    display.drawPixel(2,39, BLACK);
+    display.drawPixel(3,39, BLACK);
+    display.drawPixel(4,39, BLACK);
+    display.drawPixel(5,39, BLACK);
+    display.drawPixel(6,39, BLACK);
+    if(_bat/10 > 0){
+      display.drawPixel(7,39, BLACK);
+      display.drawPixel(8,39, BLACK);
+      display.drawPixel(9,39, BLACK);
+      display.drawPixel(10,39, BLACK);
+      display.drawPixel(11,39, BLACK);
+      display.drawPixel(12,39, BLACK);
+    }
+    if(_bat > 99){
+      display.drawPixel(13,39, BLACK);
+      display.drawPixel(14,39, BLACK);
+      display.drawPixel(15,39, BLACK);
+      display.drawPixel(16,39, BLACK);
+      display.drawPixel(17,39, BLACK);
+      display.drawPixel(18,39, BLACK);
+    }
+    display.setCursor(1, 40);
+    display.print(_bat);
+    display.setTextColor(BLACK);
+    display.setCursor(20, 40);
+    display.print("%"); 
+  }else{
+    display.setCursor(1, 40);
+    display.print("nc");
+  }
 
   // mode status display
   display.setCursor(56, 9);
@@ -255,25 +290,23 @@ void setup() {
   display.drawPixel(56,35, BLACK);
   display.drawPixel(56,36, BLACK);
   display.setCursor(57, 29);
-  display.print("off");
+  display.print(_mode);
   display.setTextColor(BLACK);
 
   // alarm display
   display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.setCursor(28, 40);
-  display.write(32);
-  display.write(42);
-  display.print("thief");
-  display.write(42);
-  display.write(32);
+  if(_thief){
+    display.write(32);
+    display.write(42);
+    display.print("thief");
+    display.write(42);
+    display.write(32); 
+  }
   
   // bitmap display
   display.drawBitmap(26, 10, logo_moto_bmp, LOGO_MOTO_WIDTH, LOGO_MOTO_HEIGHT, BLACK);
+  
   display.display();
-   
-}
- 
-void loop() {
- 
 }
   
