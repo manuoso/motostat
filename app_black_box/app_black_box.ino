@@ -12,8 +12,10 @@
 
 #include <LowPower.h>
 
-RF24 radio(9,10);
-const uint64_t pipe = 0xE8E8F0F0E1LL;
+#include <String.h>
+
+RF24 radio(9, 10);
+const uint64_t pipes[2] = {0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL}; // 0xE8E8F0F0E1LL;
 
 const int PIN_DTH11 = 7;
 DHT11 dht11(PIN_DTH11);
@@ -21,40 +23,134 @@ DHT11 dht11(PIN_DTH11);
 const int mpuAddress = 0x68;  // Puede ser 0x68 o 0x69
 MPU6050 mpu(mpuAddress);
  
-int ax, ay, az;
+int err;
+int newTemp = 0, newHum = 0;
 
-char data[16]="Hola mundo" ;
- 
+float ref_ang_x, ref_ang_y;
+
+int bat = 0;
+
+int alarm = 0;
+char data[3];
+
+int state = 0;
+
 void setup(void)
 {
+//  Serial.begin(115200);
   Wire.begin();
   mpu.initialize();
   
   radio.begin();
   radio.setDataRate(RF24_250KBPS);
   radio.setPALevel(RF24_PA_MIN);
-  
-  radio.openWritingPipe(pipe);
+
+  radio.openWritingPipe(pipes[0]);
+  radio.openReadingPipe(1, pipes[1]);
+
+//  printf_begin();
+//  radio.printDetails();
 }
  
 void loop(void)
 {
-  radio.write(data, sizeof data);
-
-  // Leer las aceleraciones 
+  int ax, ay, az;
   mpu.getAcceleration(&ax, &ay, &az);
  
-  // Calcular los angulos de inclinacion
-  float accel_ang_x = atan(ax / sqrt(pow(ay, 2) + pow(az, 2)))*(180.0 / 3.14);
-  float accel_ang_y = atan(ay / sqrt(pow(ax, 2) + pow(az, 2)))*(180.0 / 3.14);
+  float ang_x = atan(ax / sqrt(pow(ay, 2) + pow(az, 2)))*(180.0 / 3.14);
+  float ang_y = atan(ay / sqrt(pow(ax, 2) + pow(az, 2)))*(180.0 / 3.14);
 
-  int err;
-  float temp, hum;
-  if((err = dht11.read(hum, temp)) == 0){ // Si devuelve 0 ha leido bien
-    // TODO
+//  float hum, temp;
+//  if((err = dht11.read(hum, temp)) == 0){ // Si devuelve 0 ha leido bien
+//    newTemp = temp;
+//    newHum = hum;
+//  }
+
+  // TODO: Read bat level
+  
+  if (radio.available())
+  {   
+    radio.read(data, 3);
+//    Serial.print("data: ");
+//    Serial.println(data);
   }else{
-    // TODO
+    data[0] = "";
+    data[1] = "";
+    data[2] = "";
   }
-  delay(1000); // Solo lee una vez por segundo  
 
+  switch (state) {
+    case 0: // Alarma desactivada
+      if(data == "on"){
+        ref_ang_x = ang_x;
+        ref_ang_y = ang_y;
+        state = 1;
+      }else if(data == "sil"){
+        ref_ang_x = ang_x;
+        ref_ang_y = ang_y;
+        state = 2;
+      }
+      break;
+    case 1: // Alarma activada
+      if( (abs(ref_ang_x - ang_x) > 20) || (abs(ref_ang_y - ang_y) > 20) ){
+        alarm = 1;
+        activateAlarmSound();
+        ref_ang_x = ang_x;
+        ref_ang_y = ang_y;
+      }
+      if(data == "off"){
+        ref_ang_x = 0;
+        ref_ang_y = 0;
+        state = 0;
+      }
+      break;
+    case 2: // Alarma silenciosa
+      if( (abs(ref_ang_x - ang_x) > 20) || (abs(ref_ang_y - ang_y) > 20) ){
+        alarm = 1;
+        ref_ang_x = ang_x;
+        ref_ang_y = ang_y;
+      }
+      if(data == "off"){
+        ref_ang_x = 0;
+        ref_ang_y = 0;
+        state = 0;
+      }
+      break;
+  }
+
+  char msgToSend[14];
+  createMSG(msgToSend, 0, 0, 15, 15, 98); // alarm, state, newTemp, newHum, bat);
+
+//  Serial.print("msg: ");
+//  Serial.println(msgToSend);
+
+  radio.stopListening();
+  radio.write(msgToSend, 14);
+  radio.startListening();
+
+  if(state == 0){
+    LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF); 
+  }else{
+    LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
+  }
+  
+}
+
+// ----------------------------------------------------------------------------------------------------
+void createMSG(char * _msg, int _alarm, int _mode, int _temp, int _hum, int _bat){
+  String alarm, mode, temp, hum, bat;
+  alarm = (String)_alarm;
+  mode = (String)_mode;
+  temp = (String)_temp;
+  hum = (String)_hum;
+  bat = (String)_bat;
+
+  String result;
+  result = alarm + "/" + mode + "/" + temp + "/" + hum + "/" + bat + "/";
+  result.toCharArray(_msg, 14);
+}
+
+// ----------------------------------------------------------------------------------------------------
+void activateAlarmSound(){
+  
 }
