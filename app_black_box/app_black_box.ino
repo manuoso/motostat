@@ -31,7 +31,7 @@ float ref_ang_x, ref_ang_y;
 int bat = 0;
 
 int alarm = 0;
-char data[3];
+char data[3] = "off";
 
 int state = 0;
 
@@ -70,56 +70,63 @@ void loop(void)
   
   if (radio.available())
   {   
-    radio.read(data, 3);
+    radio.read(data, sizeof data);
 //    Serial.print("data: ");
-//    Serial.println(data);
-  }else{
-    data[0] = "";
-    data[1] = "";
-    data[2] = "";
+//    Serial.print(data[0]);
+//    Serial.print(data[1]);
+//    Serial.println(data[2]);
   }
 
   switch (state) {
     case 0: // Alarma desactivada
-      if(data == "on"){
+      Serial.println("State 0");
+      if(data[0] == 'o' && data[1] == 'n'){
         ref_ang_x = ang_x;
         ref_ang_y = ang_y;
         state = 1;
-      }else if(data == "sil"){
+        cleanData();
+      }else if(data[0] == 's' && data[1] == 'i' && data[2] == 'l'){
         ref_ang_x = ang_x;
         ref_ang_y = ang_y;
         state = 2;
+        cleanData();
       }
       break;
     case 1: // Alarma activada
+      Serial.println("State 1");
       if( (abs(ref_ang_x - ang_x) > 20) || (abs(ref_ang_y - ang_y) > 20) ){
         alarm = 1;
         activateAlarmSound();
         ref_ang_x = ang_x;
         ref_ang_y = ang_y;
       }
-      if(data == "off"){
+      if(data[0] == 'o' && data[1] == 'f' && data[2] == 'f'){
         ref_ang_x = 0;
         ref_ang_y = 0;
         state = 0;
+        alarm = 0;
+        cleanData();
       }
       break;
     case 2: // Alarma silenciosa
+      Serial.println("State 2");
       if( (abs(ref_ang_x - ang_x) > 20) || (abs(ref_ang_y - ang_y) > 20) ){
         alarm = 1;
         ref_ang_x = ang_x;
         ref_ang_y = ang_y;
       }
-      if(data == "off"){
+      if(data[0] == 'o' && data[1] == 'f' && data[2] == 'f'){
         ref_ang_x = 0;
         ref_ang_y = 0;
         state = 0;
+        alarm = 0;
+        cleanData();
       }
       break;
   }
 
   char msgToSend[14];
-  createMSG(msgToSend, 0, 0, 15, 15, 98); // alarm, state, newTemp, newHum, bat);
+  createMSG(msgToSend, alarm, state, 15, 15, 98); // alarm, state, newTemp, newHum, bat);
 
 //  Serial.print("msg: ");
 //  Serial.println(msgToSend);
@@ -134,6 +141,13 @@ void loop(void)
     LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
   }
   
+}
+
+// ----------------------------------------------------------------------------------------------------
+void cleanData(){
+  data[0] = "";
+  data[1] = "";
+  data[2] = ""; 
 }
 
 // ----------------------------------------------------------------------------------------------------

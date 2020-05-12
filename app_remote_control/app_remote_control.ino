@@ -132,10 +132,12 @@ static const unsigned char PROGMEM logo_thief_bmp[] = {
   B00000000, B00001000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000,
 };
 
-char data[3];
+char data[3] = "off";
 
 bool rf = false;
 int alarm = 0, mode = 0, temp = 0, hum = 0, bat1 = 0, bat2 = 0;
+
+bool alarmON = false;
 
 int state = 0;
 unsigned long mainStart = 0;
@@ -143,7 +145,7 @@ bool mainRunning = true;
 
 void setup(void)
 {
-  Serial.begin(115200);
+//  Serial.begin(115200);
   pinMode(PIN_BUT_DIS, INPUT_PULLUP);
 
   pinMode(PIN_VLED, OUTPUT);
@@ -170,40 +172,40 @@ void loop(void)
   {
     char msgRec[14];
     radio.read(msgRec, 14); // TODO: cuando está en sleep, print cosas raras
-    Serial.println(msgRec);
+//    Serial.println(msgRec);
     String rec = msgRec;
     alarm = atoi(split(rec, '/', 0).c_str());
     mode = atoi(split(rec, '/', 1).c_str());
     temp = atoi(split(rec, '/', 2).c_str());
     hum = atoi(split(rec, '/', 3).c_str());
     bat1 = atoi(split(rec, '/', 4).c_str());
-    Serial.println("-----");
-    
-    Serial.print(alarm);
-    Serial.print(" ");
-    Serial.print(mode);
-    Serial.print(" ");
-    Serial.print(temp);
-    Serial.print(" ");
-    Serial.print(hum);
-    Serial.print(" ");
-    Serial.println(bat1);
-    
-    Serial.println("-----");
+//    Serial.println("-----");
+//    
+//    Serial.print(alarm);
+//    Serial.print(" ");
+//    Serial.print(mode);
+//    Serial.print(" ");
+//    Serial.print(temp);
+//    Serial.print(" ");
+//    Serial.print(hum);
+//    Serial.print(" ");
+//    Serial.println(bat1);
+//    
+//    Serial.println("-----");
     
     rf = true;
-  } else {
-    rf = false;
   }
+
+  // TODO: Read bat level
 
   int pul = checkButton();
 
   if (mainRunning && (millis() - mainStart ) >= 10000) {
-    mainRunning = false;
     state = 1;
   }
 
   if (alarm == 1) {
+    digitalWrite(PIN_VLED, LOW);
     state = 4;
   }
 
@@ -221,6 +223,8 @@ void loop(void)
       display.display();
       digitalWrite(PIN_VLED, HIGH);
       state = 2;
+      mainRunning = false;
+      rf = false;
       break;
     case 2: // waiting for awake in sleep display
       LowPower.powerDown(SLEEP_250MS, ADC_OFF, BOD_OFF);
@@ -234,7 +238,15 @@ void loop(void)
     case 3: // menu status display
       printMenuDisplay(rf, temp, hum, bat1, bat2, mode);
       if (pul == 4) {
+        changeMode("off");
         state = 1;
+      }else if(pul == 1){
+        if(!alarmON){
+          changeMode("on");
+        }else{
+          changeMode("sil");
+        }
+        alarmON = !alarmON;
       }
       break;
     case 4: // thief display
@@ -243,14 +255,27 @@ void loop(void)
       display.clearDisplay();
       display.display();
       mainRunning = true;
-      if (pul == 2) {
+      if (pul == 4) {
         mainStart = millis();
         state = 0;
+        alarm = 0;
+        changeMode("off");
       }
       break;
   }
 
   delay(100);
+}
+
+// ----------------------------------------------------------------------------------------------------
+void changeMode(char _msg[3])
+{
+  data[0] = _msg[0];
+  data[1] = _msg[1];
+  data[2] = _msg[2];
+  radio.stopListening();
+  radio.write(data, sizeof data);
+  radio.startListening(); 
 }
 
 // ----------------------------------------------------------------------------------------------------
